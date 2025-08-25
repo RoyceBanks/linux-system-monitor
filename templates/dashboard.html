@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Linux System Monitor</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
+        h1 { text-align: center; }
+        .stats { margin: 20px auto; width: 50%; background: white; padding: 20px; border-radius: 10px; }
+        .stat { margin: 10px 0; }
+        canvas { max-width: 600px; margin: auto; display: block; }
+        table { margin: auto; margin-top: 20px; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 10px 15px; text-align: center; }
+        th { background: #007BFF; color: white; }
+        tr:nth-child(even) { background: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Linux System Monitor</h1>
+
+    <div class="stats">
+        <div class="stat"><strong>System:</strong> <span id="system"></span></div>
+        <div class="stat"><strong>Release:</strong> <span id="release"></span></div>
+        <div class="stat"><strong>Uptime:</strong> <span id="uptime"></span></div>
+        <div class="stat"><strong>CPU Usage:</strong> <span id="cpu"></span>%</div>
+        <div class="stat"><strong>Memory Usage:</strong> <span id="memory"></span>%</div>
+        <div class="stat"><strong>Disk Usage:</strong> <span id="disk"></span>%</div>
+    </div>
+
+    <h2 style="text-align:center;">CPU Usage Chart</h2>
+    <canvas id="cpuChart"></canvas>
+
+    <h2 style="text-align:center;">Top 5 Processes (by Memory)</h2>
+    <table border="1" cellspacing="0" cellpadding="8" style="width:70%;">
+        <thead>
+            <tr>
+                <th>PID</th>
+                <th>Name</th>
+                <th>CPU %</th>
+                <th>Memory %</th>
+            </tr>
+        </thead>
+        <tbody id="processTable"></tbody>
+    </table>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        async function fetchStats() {
+            let response = await fetch('/api/stats');
+            let data = await response.json();
+
+            // Update text stats
+            document.getElementById("system").textContent = data.system;
+            document.getElementById("release").textContent = data.release;
+            document.getElementById("uptime").textContent = data.uptime;
+            document.getElementById("cpu").textContent = data.cpu_percent;
+            document.getElementById("memory").textContent = data.memory_percent;
+            document.getElementById("disk").textContent = data.disk_percent;
+
+            // Update CPU chart
+            addData(cpuChart, new Date().toLocaleTimeString(), data.cpu_percent);
+
+            // Update process table
+            let tableBody = document.getElementById("processTable");
+            tableBody.innerHTML = ""; // clear old rows
+            data.top_processes.forEach(proc => {
+                let row = `<tr>
+                    <td>${proc.pid}</td>
+                    <td>${proc.name}</td>
+                    <td>${proc.cpu_percent}</td>
+                    <td>${proc.memory_percent.toFixed(2)}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        // Chart.js setup
+        const ctx = document.getElementById('cpuChart').getContext('2d');
+        const cpuChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'CPU %',
+                    data: [],
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Time' } },
+                    y: { beginAtZero: true, max: 100, title: { display: true, text: 'CPU %' } }
+                }
+            }
+        });
+
+        // Add new data point
+        function addData(chart, label, value) {
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(value);
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.update();
+        }
+
+        // Refresh stats every 2 seconds
+        setInterval(fetchStats, 2000);
+        fetchStats();
+    </script>
+</body>
+</html>
