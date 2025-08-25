@@ -21,10 +21,11 @@ Displays CPU, memory, disk usage, uptime, and the top 5 processes by memory usag
 
 1. Clone the repository:
 git clone https://github.com/RoyceBanks/linux-system-monitor.git
+
 cd linux-system-monitor
 
 2. Install dependencies:
-pip3 install -r requirements.t
+pip3 install -r requirements.txt
 
 3. Run the app:
 python3 monitor_web.py
