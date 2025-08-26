@@ -15,7 +15,7 @@ Displays CPU, memory, disk usage, uptime, and the top 5 processes by memory usag
 
 ## Screenshots
 
-![Dashboard Screenshot](screenshots/dashboard.png)
+![Dashboard Screenshot](screenshots/screenshots.png)
 
 ## Installation
 
